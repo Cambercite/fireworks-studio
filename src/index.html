@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Fireworks Studio</title>
+  <meta name="description" content="Design fireworks shows on a timeline with particle shells and animated GIFs, then export video, GIF or PNG.">
+  <meta name="theme-color" content="#13111c">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=JetBrains+Mono:wght@400;500&family=Mulish:wght@400;600;700&display=swap">
+  <style>/*__CSS__*/</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header class="topbar">
+    <button class="icon-btn drawer-toggle" id="btnLib" type="button" data-icon="panelLeft" aria-label="Show library" title="Library"></button>
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+        <g stroke-linecap="round" stroke-width="2.2">
+          <path d="M16 4v6M16 22v6M4 16h6M22 16h6" stroke="#ffb547"/>
+          <path d="M7.5 7.5l4 4M20.5 20.5l4 4M7.5 24.5l4-4M20.5 11.5l4-4" stroke="#ff5f8f"/>
+        </g>
+        <circle cx="16" cy="16" r="2.6" fill="#fff3d6"/>
+      </svg>
+      <span class="brand-name">Fireworks Studio</span>
+    </div>
+    <div class="proj">
+      <input id="projectName" type="text" maxlength="80" aria-label="Show name" spellcheck="false">
+      <span id="saveState" class="save-state"></span>
+    </div>
+    <div class="top-actions">
+      <div class="menu">
+        <button class="btn ghost" id="btnFile" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="fileMenu" data-icon="file">File</button>
+        <div class="menu-pop" id="fileMenu" role="menu">
+          <button type="button" role="menuitem" data-act="new"><span>New show</span></button>
+          <button type="button" role="menuitem" data-act="open"><span>Open show file…</span><kbd>Ctrl+O</kbd></button>
+          <button type="button" role="menuitem" data-act="save"><span>Save show file</span><kbd>Ctrl+S</kbd></button>
+          <div class="sep" role="separator"></div>
+          <button type="button" role="menuitem" data-act="import"><span>Import GIFs or images…</span></button>
+          <button type="button" role="menuitem" data-act="png"><span>Save this frame as PNG</span></button>
+          <div class="sep" role="separator"></div>
+          <button type="button" role="menuitem" data-act="sample"><span>Load the sample show</span></button>
+        </div>
+      </div>
+      <button class="icon-btn" id="btnUndo" type="button" data-icon="undo" aria-label="Undo (Ctrl+Z)" title="Undo  Ctrl+Z"></button>
+      <button class="icon-btn" id="btnRedo" type="button" data-icon="redo" aria-label="Redo (Ctrl+Shift+Z)" title="Redo  Ctrl+Shift+Z"></button>
+      <button class="icon-btn" id="btnHelp" type="button" data-icon="help" aria-label="Shortcuts (?)" title="Shortcuts  ?"></button>
+      <button class="btn primary" id="btnExport" type="button" data-icon="download" title="Export  Ctrl+E"><span>Export</span></button>
+      <button class="icon-btn drawer-toggle" id="btnInsp" type="button" data-icon="panelRight" aria-label="Show inspector" title="Inspector"></button>
+    </div>
+  </header>
+
+  <aside class="panel library" id="library" aria-label="Library">
+    <div class="panel-head">
+      <h2>Library</h2>
+      <button class="btn small" id="btnImport" type="button" data-icon="upload" data-size="14">Import</button>
+    </div>
+    <div class="panel-scroll">
+      <section class="lib-sec">
+        <h3>Shells</h3>
+        <p class="lib-sub">Particle fireworks. Any colour, any size, launched from the ground.</p>
+        <div class="lib-grid" id="libShells"></div>
+      </section>
+      <section class="lib-sec">
+        <h3>Animated GIFs</h3>
+        <div class="lib-grid" id="libGifs"></div>
+      </section>
+      <section class="lib-sec">
+        <h3>Your uploads</h3>
+        <div class="lib-grid" id="libUploads"></div>
+        <p class="lib-empty" id="uploadsEmpty">Drop GIFs, PNGs or JPGs here, or use Import.</p>
+      </section>
+    </div>
+  </aside>
+
+  <main class="stage-area" id="stageArea">
+    <div class="stage-tools" role="toolbar" aria-label="Stage tools">
+      <button class="tool" id="toolSelect" type="button" data-icon="pointer" aria-label="Select tool (V)" title="Select  V"></button>
+      <button class="tool" id="toolFire" type="button" data-icon="burst" aria-label="Fire tool (F)" title="Fire tool: click the sky to fire  F"></button>
+      <span class="tool-sep" aria-hidden="true"></span>
+      <button class="tool" id="toggleSnap" type="button" data-icon="magnet" aria-label="Snap to guides" title="Snap to guides (hold Alt to override)"></button>
+      <button class="tool" id="toggleGhosts" type="button" data-icon="ghost" aria-label="Show outlines of cues not on screen (G)" title="Outline cues that aren't on screen right now  G"></button>
+    </div>
+    <div class="fire-hint" id="fireHint" hidden></div>
+    <div class="stage-wrap" id="stageWrap">
+      <div class="stage" id="stage">
+        <canvas id="scene"></canvas>
+        <canvas id="overlay" tabindex="0" aria-label="Show stage. Drag fireworks here from the library."></canvas>
+      </div>
+    </div>
+    <div class="drop-veil">Drop to add to the sky</div>
+  </main>
+
+  <aside class="panel inspector" id="inspector" aria-label="Inspector">
+    <div class="panel-head"><h2 id="inspectorTitle">Show settings</h2></div>
+    <div class="panel-scroll" id="inspectorBody"></div>
+  </aside>
+
+  <section class="timeline" id="timeline" aria-label="Timeline">
+    <div class="tl-resize" id="tlResize" title="Drag to resize the timeline"></div>
+    <div class="transport">
+      <div class="tp-group">
+        <button class="icon-btn" id="btnStart" type="button" data-icon="toStart" aria-label="Go to start (Home)" title="Go to start  Home"></button>
+        <button class="icon-btn" id="btnStepBack" type="button" data-icon="stepBack" aria-label="Previous frame (,)" title="Previous frame  ,"></button>
+        <button class="play-btn" id="btnPlay" type="button" aria-label="Play (Space)"></button>
+        <button class="icon-btn" id="btnStepFwd" type="button" data-icon="stepFwd" aria-label="Next frame (.)" title="Next frame  ."></button>
+        <button class="icon-btn" id="btnLoop" type="button" data-icon="repeat" aria-label="Loop (L)" title="Loop  L"></button>
+      </div>
+      <div class="timecode">
+        <span id="timecode">00:00.00</span>
+        <span class="tc-sep">/</span>
+        <label class="dur"><input id="durInput" type="number" min="1" max="300" step="0.5" aria-label="Show length in seconds"><span>s</span></label>
+      </div>
+      <div class="tp-group right">
+        <button class="icon-btn" id="btnSound" type="button" aria-label="Sound (M)"></button>
+        <span class="tool-sep" aria-hidden="true"></span>
+        <button class="icon-btn" id="tlZoomOut" type="button" data-icon="zoomOut" aria-label="Zoom timeline out" title="Zoom out"></button>
+        <button class="icon-btn" id="tlZoomFit" type="button" data-icon="fit" aria-label="Fit the timeline to the window" title="Fit"></button>
+        <button class="icon-btn" id="tlZoomIn" type="button" data-icon="zoomIn" aria-label="Zoom timeline in" title="Zoom in"></button>
+      </div>
+    </div>
+    <div class="tl-scroll" id="tlScroll">
+      <div class="tl-content" id="tlContent">
+        <div class="tl-ruler-row">
+          <div class="tl-corner">Cues</div>
+          <div class="tl-ruler-wrap" id="tlRulerWrap"><canvas id="tlRuler"></canvas><div class="tl-cap" id="tlCap"></div></div>
+        </div>
+        <div class="tl-rows" id="tlRows"></div>
+        <p class="tl-empty" id="tlEmpty" hidden>No cues yet. Drag a shell from the library onto the sky, or press F and click the sky.</p>
+        <div class="tl-playhead" id="tlPlayhead"></div>
+        <div class="tl-endmark" id="tlEnd"></div>
+        <div class="tl-drop" id="tlDrop" hidden></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div id="modalRoot"></div>
+<div id="toasts" aria-live="polite"></div>
+<div id="ctxMenu" class="ctx-menu" role="menu" hidden></div>
+<input type="file" id="fileInput" hidden multiple accept="image/gif,image/png,image/jpeg,image/webp,image/svg+xml,.gif,.png,.jpg,.jpeg,.webp,.svg,.fireworks.json,.json">
+<input type="file" id="projectInput" hidden accept=".json,application/json">
+<input type="file" id="bgInput" hidden accept="image/*">
+<noscript><p style="padding:24px;color:#efeaf7;background:#0b0a12">Fireworks Studio needs JavaScript turned on.</p></noscript>
+<script>/*__JS__*/</script>
+</body>
+</html>
